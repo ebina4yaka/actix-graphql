@@ -1,7 +1,10 @@
 use crate::db::post::{Post, PostNewForm, PostUpdateForm};
 use crate::graphql::schema::{Context, NewPost, UpdatePost};
+use diesel::debug_query;
+use diesel::pg::Pg;
 use diesel::prelude::*;
 use diesel::result::Error;
+use log::debug;
 
 pub struct PostRepository;
 
@@ -15,6 +18,8 @@ impl PostRepository {
         use crate::schema::posts::dsl::*;
         let conn = &context.pool.get().unwrap();
         let select_query = posts.filter(id.eq(pkey));
+        let sql = debug_query::<Pg, _>(&select_query).to_string();
+        debug!("{:?}", sql);
         select_query.get_result::<Post>(conn)
     }
     pub fn insert_post(context: &Context, new_post: NewPost) -> Result<Vec<Post>, Error> {
