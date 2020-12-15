@@ -20,3 +20,5 @@ r2d2_postgres = "0.16.0"
 diesel = { version = "1.4.5", features = ["postgres", "r2d2", "chrono"] }
 chrono = "0.4.19"
 futures = "0.3.6"
+dataloader = "0.13.0"
+async-trait = "0.1.41"

@@ -1,3 +1,4 @@
+use crate::db::manager::DataPgPool;
 use crate::db::post::{Post, PostNewForm, PostUpdateForm};
 use crate::graphql::schema::{Context, NewPost, UpdatePost};
 use diesel::debug_query;
@@ -45,5 +46,13 @@ impl PostRepository {
             .set(&post_form)
             .get_result(conn)?;
         Ok(rows_inserted)
+    }
+    pub fn any_posts(pool: &DataPgPool, keys: &[i32]) -> Result<Vec<Post>, Error> {
+        use crate::schema::posts::dsl::*;
+        let conn = &pool.get().unwrap();
+        let select_query = posts.filter(id.eq_any(keys));
+        let sql = debug_query::<Pg, _>(&select_query).to_string();
+        debug!("{:?}", sql);
+        select_query.get_results::<Post>(conn)
     }
 }

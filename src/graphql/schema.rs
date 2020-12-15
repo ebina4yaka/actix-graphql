@@ -1,3 +1,4 @@
+use crate::db::loaders::Loaders;
 use crate::db::manager::DataPgPool;
 use crate::db::photo;
 use crate::db::photo_repository::PhotoRepository;
@@ -64,9 +65,8 @@ impl Photo {
     pub fn url(&self) -> String {
         format!("http://hogehoge/{}", self.id)
     }
-    pub fn post(&self, context: &Context) -> FieldResult<Post> {
-        let post = PostRepository::find_post(context, self.post_id)?;
-        Ok(post.into())
+    pub async fn post(&self, context: &Context) -> FieldResult<Post> {
+        Ok(context.loaders.posts_loader.load(self.id).await.into())
     }
 }
 
@@ -157,6 +157,7 @@ pub struct Mutation;
 
 pub struct Context {
     pub pool: DataPgPool,
+    pub loaders: Loaders,
 }
 impl juniper::Context for Context {}
 

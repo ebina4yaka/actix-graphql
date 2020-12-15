@@ -1,3 +1,4 @@
+use crate::db::loaders::Loaders;
 use crate::db::manager::new_pool;
 use crate::graphql::schema::{create_schema, Context, Schema};
 use actix_web::{middleware, web, App, Error, HttpResponse, HttpServer, Responder};
@@ -22,7 +23,10 @@ pub async fn graphql(
 ) -> Result<HttpResponse, Error> {
     let user = web::block(move || {
         let mut rt = futures::executor::LocalPool::new();
-        let ctx = &Context { pool: pool.clone() };
+        let ctx = &Context {
+            pool: pool.clone(),
+            loaders: Loaders::new(&pool),
+        };
         let graphql_res = data.execute(&st, ctx);
         let res = rt.run_until(graphql_res);
         Ok::<_, serde_json::error::Error>(serde_json::to_string(&res)?)
