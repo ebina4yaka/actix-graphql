@@ -1,3 +1,4 @@
+use crate::db::loaders::Loaders;
 use crate::db::manager::DataPgPool;
 use crate::db::photo;
 use crate::db::photo_repository::PhotoRepository;
@@ -64,9 +65,8 @@ impl Photo {
     pub fn url(&self) -> String {
         format!("http://hogehoge/{}", self.id)
     }
-    pub fn post(&self, context: &Context) -> FieldResult<Post> {
-        let post = PostRepository::find_post(context, self.post_id)?;
-        Ok(post.into())
+    pub async fn post(&self, context: &Context) -> FieldResult<Post> {
+        Ok(context.loaders.posts_loader.load(self.post_id).await.into())
     }
 }
 
@@ -115,9 +115,15 @@ impl Post {
     pub fn content(&self) -> String {
         self.content.clone()
     }
-    pub fn photos(&self, context: &Context) -> FieldResult<Vec<Photo>> {
-        let photos = PhotoRepository::post_photos(context, self.id)?;
-        Ok(photos.into_iter().map(|t| t.into()).collect())
+    async fn photos(&self, context: &Context) -> FieldResult<Vec<Photo>> {
+        Ok(context
+            .loaders
+            .post_photos_loader
+            .load(self.id)
+            .await
+            .into_iter()
+            .map(|t| t.into())
+            .collect())
     }
 }
 
@@ -157,6 +163,7 @@ pub struct Mutation;
 
 pub struct Context {
     pub pool: DataPgPool,
+    pub loaders: Loaders,
 }
 impl juniper::Context for Context {}
 
@@ -167,10 +174,18 @@ impl Query {
             .and_then(|photos| Ok(photos.into_iter().map(|t| t.into()).collect()))
             .map_err(Into::into)
     }
-    fn all_posts(&self, context: &Context) -> FieldResult<Vec<Post>> {
-        PostRepository::all_posts(context)
-            .and_then(|posts| Ok(posts.into_iter().map(|t| t.into()).collect()))
-            .map_err(Into::into)
+    async fn all_posts(&self, context: &Context) -> FieldResult<Vec<Post>> {
+        let posts = PostRepository::all_posts(context)?;
+        let mut result = Vec::new();
+        for post in posts {
+            context
+                .loaders
+                .posts_loader
+                .prime(post.id, post.clone())
+                .await;
+            result.push(post.into());
+        }
+        Ok(result)
     }
 }
 

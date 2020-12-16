@@ -1,7 +1,11 @@
+use crate::db::manager::DataPgPool;
 use crate::db::photo::{Photo, PhotoNewForm, PhotoUpdateForm};
 use crate::graphql::schema::{Context, NewPhoto, UpdatePhoto};
+use diesel::debug_query;
+use diesel::pg::Pg;
 use diesel::prelude::*;
 use diesel::result::Error;
+use log::debug;
 
 pub struct PhotoRepository;
 
@@ -33,10 +37,12 @@ impl PhotoRepository {
             .get_result(conn)?;
         Ok(rows_inserted)
     }
-    pub fn post_photos(context: &Context, post_pkey: i32) -> Result<Vec<Photo>, Error> {
+    pub fn any_post_photos(pool: &DataPgPool, keys: &[i32]) -> Result<Vec<Photo>, Error> {
         use crate::schema::photos::dsl::*;
-        let conn = &context.pool.get().unwrap();
-        let rows_inserted = photos.filter(post_id.eq(post_pkey)).load::<Photo>(conn)?;
-        Ok(rows_inserted)
+        let conn = &pool.get().unwrap();
+        let select_query = photos.filter(post_id.eq_any(keys));
+        let sql = debug_query::<Pg, _>(&select_query).to_string();
+        debug!("{:?}", sql);
+        select_query.get_results::<Photo>(conn)
     }
 }

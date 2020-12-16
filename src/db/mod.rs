@@ -1,3 +1,4 @@
+pub mod loaders;
 pub mod manager;
 pub mod photo;
 pub mod photo_repository;
