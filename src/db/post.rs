@@ -24,3 +24,9 @@ pub struct PostUpdateForm<'a> {
     pub title: Option<&'a str>,
     pub content: Option<&'a str>,
 }
+
+#[derive(Eq, PartialEq, Debug, Queryable, Clone, Identifiable)]
+#[table_name = "posts"]
+pub struct AssocPost {
+    pub id: i32,
+}

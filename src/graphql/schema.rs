@@ -115,9 +115,15 @@ impl Post {
     pub fn content(&self) -> String {
         self.content.clone()
     }
-    pub fn photos(&self, context: &Context) -> FieldResult<Vec<Photo>> {
-        let photos = PhotoRepository::post_photos(context, self.id)?;
-        Ok(photos.into_iter().map(|t| t.into()).collect())
+    async fn photos(&self, context: &Context) -> FieldResult<Vec<Photo>> {
+        Ok(context
+            .loaders
+            .post_photos_loader
+            .load(self.id)
+            .await
+            .into_iter()
+            .map(|t| t.into())
+            .collect())
     }
 }
 

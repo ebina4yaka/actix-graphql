@@ -1,9 +1,10 @@
-use crate::db::post::Post;
+use crate::db::post::{AssocPost, Post};
 use crate::schema::photos;
 use chrono::NaiveDateTime;
 
-#[derive(Eq, PartialEq, Debug, Queryable, Associations, Identifiable)]
+#[derive(Clone, Eq, PartialEq, Debug, Queryable, Associations, Identifiable)]
 #[belongs_to(parent = "Post")]
+#[belongs_to(parent = "AssocPost", foreign_key = "post_id")]
 #[table_name = "photos"]
 pub struct Photo {
     pub id: i32,
