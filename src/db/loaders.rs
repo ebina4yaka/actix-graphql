@@ -73,7 +73,7 @@ impl BatchFn<i32, Vec<Photo>> for PostPhotosLoadFn {
         let result = assoc_posts
             .iter()
             .zip(post_photos)
-            .map(|assoc| (assoc.0.id, assoc.1.clone()))
+            .map(|assoc| (assoc.0.id, assoc.1))
             .collect();
         result
     }

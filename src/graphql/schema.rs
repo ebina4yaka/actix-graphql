@@ -66,7 +66,7 @@ impl Photo {
         format!("http://hogehoge/{}", self.id)
     }
     pub async fn post(&self, context: &Context) -> FieldResult<Post> {
-        Ok(context.loaders.posts_loader.load(self.id).await.into())
+        Ok(context.loaders.posts_loader.load(self.post_id).await.into())
     }
 }
 
@@ -174,10 +174,18 @@ impl Query {
             .and_then(|photos| Ok(photos.into_iter().map(|t| t.into()).collect()))
             .map_err(Into::into)
     }
-    fn all_posts(&self, context: &Context) -> FieldResult<Vec<Post>> {
-        PostRepository::all_posts(context)
-            .and_then(|posts| Ok(posts.into_iter().map(|t| t.into()).collect()))
-            .map_err(Into::into)
+    async fn all_posts(&self, context: &Context) -> FieldResult<Vec<Post>> {
+        let posts = PostRepository::all_posts(context)?;
+        let mut result = Vec::new();
+        for post in posts {
+            context
+                .loaders
+                .posts_loader
+                .prime(post.id, post.clone())
+                .await;
+            result.push(post.into());
+        }
+        Ok(result)
     }
 }
 
