@@ -171,7 +171,7 @@ impl juniper::Context for Context {}
 impl Query {
     fn all_photos(&self, context: &Context) -> FieldResult<Vec<Photo>> {
         PhotoRepository::all_photos(context)
-            .and_then(|photos| Ok(photos.into_iter().map(|t| t.into()).collect()))
+            .map(|photos| photos.into_iter().map(|t| t.into()).collect())
             .map_err(Into::into)
     }
     async fn all_posts(&self, context: &Context) -> FieldResult<Vec<Post>> {
@@ -206,7 +206,7 @@ impl Mutation {
     }
     fn create_post(&self, context: &Context, new_post: NewPost) -> Result<Vec<Post>, FieldError> {
         PostRepository::insert_post(context, new_post)
-            .and_then(|posts| Ok(posts.into_iter().map(|t| t.into()).collect()))
+            .map(|posts| posts.into_iter().map(|t| t.into()).collect())
             .map_err(Into::into)
     }
     fn update_post(
